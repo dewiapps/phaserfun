@@ -60,7 +60,7 @@ function updateText(){
   
   notes = game.add.group();
 
-  var rand = game.rnd.integerInRange(0, questions.easy.length);
+  var rand = game.rnd.integerInRange(0, questions.easy.length-1);
   currChord = questions.easy[rand];
   
   game.time.events.repeat(300, 6, setNotes, this);
