@@ -5,29 +5,63 @@ var counter = 0;
 var notes;
 var currChord;
 var fx;
+var guitarNeck;
+var fretsHeight = [0,60,120,180,250,300,350,400,450];
+var fretsWidth = [10,76,156,230,308,384];
+var fretWidth = 78;
 
-var frets = [100,150,200,250,300,350,400,450,500];
-
+var tone10;
 
 var questions = {
   easy: [
-    {name: "G", notes: [3,2,0,0,3,3]},
-    {name: "D", notes: [-1,-1,0,2,3,2]},
-    {name: "C", notes: [-1,3,2,0,1,0]}
+    {name: "G Major", notes: [{fret: 3, finger: 2},{fret: 2, finger: 1},{fret: 0,finger: 0},{fret: 0, finger: 0},{fret: 3, finger: 3},{fret: 3, finger: 4}]},
+    {name: "D Major", notes: [{fret: -1, finger: "x"},{fret: -1, finger: "x"},{fret: 0,finger: 0},{fret: 2, finger: 1},{fret: 3, finger: 3},{fret: 2, finger: 2}]},
+    {name: "C Major", notes: [{fret: -1, finger: "x"},{fret: 3, finger: 3},{fret: 2,finger: 2},{fret: 0, finger: 0},{fret: 1, finger: 1},{fret: 0, finger: 0}]},
+    {name: "F Major", notes: [{fret: -1, finger: "x"},{fret: -1, finger: "x"},{fret: 3,finger: 3},{fret: 2, finger: 2},{fret: 1, finger: 1},{fret: 1, finger: 1}]},
+    {name: "E Major", notes: [{fret: 0, finger: 0},{fret: 2, finger: 2},{fret: 2,finger: 2},{fret: 1, finger: 1},{fret: 0, finger: 0},{fret: 0, finger: 0}]},
+    {name: "A Major", notes: [{fret: -1, finger: "x"},{fret: 0, finger: 0},{fret: 2,finger: 1},{fret: 2, finger: 2},{fret: 2, finger: 3},{fret: 0, finger: 0}]}
   ],
-  medium: ["Gadd9","Csus","D7"],
+  medium: [
+    {name: "A2", notes: [{fret: -1, finger: "x"},{fret: 0, finger: 0},{fret: 2,finger: 1},{fret: 2, finger: 2},{fret: 0, finger: 0},{fret: 0, finger: 0}]},
+    {name: "A7", notes: [{fret: -1, finger: "x"},{fret: 0, finger: 0},{fret: 2,finger: 2},{fret: 0, finger: 0},{fret: 2, finger: 3},{fret: 0, finger: 0}]},
+    {name: "Asus", notes: [{fret: -1, finger: "x"},{fret: 0, finger: 0},{fret: 2,finger: 1},{fret: 2, finger: 2},{fret: 3, finger: 3},{fret: 0, finger: 0}]},
+    {name: "D2", notes: [{fret: -1, finger: "x"},{fret: -1, finger: "x"},{fret: 0,finger: 0},{fret: 2, finger: 1},{fret: 3, finger: 3},{fret: 0, finger: 0}]},
+    {name: "D7", notes: [{fret: -1, finger: "x"},{fret: -1, finger: "x"},{fret: 0,finger: 0},{fret: 2, finger: 2},{fret: 1, finger: 1},{fret: 2, finger: 3}]},
+    {name: "Dsus", notes: [{fret: -1, finger: "x"},{fret: -1, finger: "x"},{fret: 0,finger: 0},{fret: 2, finger: 1},{fret: 3, finger: 3},{fret: 3, finger: 4}]},
+    {name: "E7", notes: [{fret: 0, finger: 0},{fret: 2, finger: 2},{fret: 0,finger: 0},{fret: 1, finger: 1},{fret: 0, finger: 0},{fret: 0, finger: 0}]},
+  ],
   hard: ["G11","C9","Dmin7b5"]
   
 } // end questions
 
 function preload(){
-  game.load.image('note', 'images/bullet.png');
+  //images
+  game.load.image('1', 'images/1.png');
+  game.load.image('2', 'images/2.png');
+  game.load.image('3', 'images/3.png');
+  game.load.image('4', 'images/4.png');
+  game.load.image('bullet', 'images/bullet.png');
+  game.load.image('guitarNeck', 'images/GuitarNeck.png');
+
+  //tones
   game.load.audio('sfx', [ 'audio/fx_mixdown.mp3','audio/fx_mixdown.ogg' ]);
-}
+  
+  for (var i=1; i < 7; i++){
+    for (var j=0; j < 8; j++){
+      var toneString = i.toString() + j.toString();
+      game.load.audio(toneString, [ 'audio/guitar_tones/' + toneString + '.mp3','audio/guitar_tones/' + toneString + '.ogg' ]);
+    }
+  }
+
+}// end preload
 
 function create(){
-  text = game.add.text(32, 380, '', { font: "30pt Courier", fill: "#19cb65", stroke: "#119f4e", strokeThickness: 2 });
-  
+  game.stage.backgroundColor = '#ffffff';
+  guitarNeck = game.add.sprite(0, 50, 'guitarNeck');
+  guitarNeck.scale.set(.3);
+
+  text = game.add.text(150, 0, '', { font: "30pt Courier", fill: "#19cb65", stroke: "#119f4e", strokeThickness: 2 });
+    
     fx = game.add.audio('sfx');
     fx.allowMultiple = true;
 	fx.addMarker('alien death', 1, 1.0);
@@ -46,8 +80,6 @@ function update(){
   
   game.input.onDown.addOnce(updateText, this);
   
-  
-
 }// end update
 
 
@@ -61,24 +93,27 @@ function updateText(){
   notes = game.add.group();
 
   var rand = game.rnd.integerInRange(0, questions.easy.length-1);
-  currChord = questions.easy[rand];
-  
+  currChord = questions.medium[rand];
   game.time.events.repeat(300, 6, setNotes, this);
   
-  text.setText(currChord.name);
+//  text.setText(currChord.name); DEBUG
 }
 
 function setNotes(){
-    
-    var currNote = currChord.notes[counter];
-    if (currNote < 0 ){
+    var currFret = currChord.notes[counter].fret;
+    var currFinger = (currChord.notes[counter].finger).toString();
+    var toneString = (6 - counter).toString() + currFret;
+    var currTone = game.add.audio(toneString);
+    console.log('toneString = ' + toneString);
+    if (currFret < 0 ){
       // this is an X
       fx.play('squit');
-      var note = notes.create(counter*70 + 10, 50, 'note', 0);
+      var note = notes.create(fretsWidth[counter], fretsHeight[0], 'bullet', 0);
     }else{ 
       // not an X
-      fx.play('ping');
-      var note = notes.create(counter*70 + 10, frets[currChord.notes[counter]], 'note', 0);
+      currTone.play();
+      var note = notes.create(fretsWidth[counter], fretsHeight[currFret], currFinger, 0);
+      note.scale.set(.4);
     }
     
     counter++;
